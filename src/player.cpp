@@ -98,7 +98,7 @@ void Player::maybe_emit_walk_particles(ParticleSystem* ps, double time)
         Vec2 particle_size = Vec2<double>(utils::rand_float(8.0, 16.0));
         Vec2 particle_pos(
                     m_pos.x+m_size.x/2+utils::rand_float(-32.0, 16.0),
-                    m_pos.y+m_size.y-particle_size.y);
+                    m_pos.y+m_size.y-particle_size.y/(64.0/(double)utils::tile_size));
 
         Particle* p = ps->add_particle(particle_pos,
                                        particle_size,

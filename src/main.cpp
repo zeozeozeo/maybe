@@ -9,8 +9,9 @@
 
 int main()
 {
+    SDL_SetHint(SDL_HINT_VIDEO_HIGHDPI_DISABLED, "0");
     if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER | SDL_INIT_AUDIO) != 0)
-        error("failed to initialize SDL");
+        error(std::string("failed to initialize SDL: ") + SDL_GetError());
     utils::init();
 
     int width = 1280, height = 720;
@@ -24,7 +25,7 @@ int main()
                     SDL_WINDOW_ALLOW_HIGHDPI);
 
     if (window == nullptr)
-        error("failed to create window");
+        error(std::string("failed to create window: ") + SDL_GetError());
 
     // create renderer
     SDL_Renderer* renderer = SDL_CreateRenderer(
@@ -33,12 +34,28 @@ int main()
                 SDL_RENDERER_PRESENTVSYNC);
 
     if (renderer == nullptr)
-        error("failed to create renderer");
+        error(std::string("failed to create renderer: ") + SDL_GetError());
 
     SDL_GL_SetSwapInterval(1); // enable vsync (if the renderer is accelerated)
 
+    // scale the renderer output for high-DPI displays
+    float font_scale = 1.0;
+
+    {
+        int render_w, render_h;
+        int window_w, window_h;
+        float scale_x, scale_y;
+        SDL_GetRendererOutputSize(renderer, &render_w, &render_h);
+        SDL_GetWindowSize(window, &window_w, &window_h);
+        scale_x = (float)(render_w) / (float)(window_w);
+        scale_y = (float)(render_h) / (float)(window_h);
+        SDL_RenderSetScale(renderer, scale_x, scale_y);
+        font_scale = scale_y;
+    }
+
     // create game context (allocated on the heap incase it gets too big)
     std::unique_ptr<Game> game = std::make_unique<Game>();
+    game->init_ui(renderer, window, font_scale);
     game->load_level();
 
     // main loop
@@ -49,8 +66,11 @@ int main()
     while (game->m_running) {
         // process SDL events
         SDL_Event event;
+
+        game->begin_events();
         while (SDL_PollEvent(&event))
             game->process_event(&event);
+        game->end_events();
 
         // calculate delta time (in seconds)
         last_frametime = time_now;

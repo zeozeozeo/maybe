@@ -10,7 +10,7 @@
 #define P_MAX_FALL_SPEED 5000.0
 #define P_FALL_ACCEL 3500.0
 #define P_WALK_SPEED 900.0
-#define P_WALK_ACCEL 4500.0
+#define P_WALK_ACCEL 6000.0
 #define P_JUMP_HEIGHT 1200.0
 
 enum Direction
