@@ -31,8 +31,9 @@ public:
     void draw_ui(double dt);
     void begin_events();
     void end_events();
-    void load_textures(SDL_Renderer *renderer);
+    void load_textures(SDL_Renderer* renderer);
     void load_texture(std::string path, SDL_Renderer* renderer, SDL_Texture** tex);
+    void draw_background(SDL_Renderer* renderer);
 
     bool m_running = true;
     Color m_bg_color = Color(255, 255, 255, 255);
@@ -46,6 +47,7 @@ public:
     Ghost m_recording_ghost;
     Ghost m_playback_ghost;
     double m_level_start_time;
+    int m_screen_w, m_screen_h;
 
     char m_ui_replay_path[256];
     nk_bool m_ui_overwrite_file;

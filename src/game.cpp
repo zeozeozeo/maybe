@@ -146,6 +146,8 @@ void Game::process_event(SDL_Event* event)
 void Game::update(double dt, int screen_w, int screen_h) {
     m_time += dt;
     m_player.update(dt, m_time, &m_ps);
+    m_screen_w = screen_w;
+    m_screen_h = screen_h;
 
     if (m_player.m_time_since_dead > 0.4) {
         reset();
@@ -169,7 +171,13 @@ void Game::update(double dt, int screen_w, int screen_h) {
     }
 
     // record action
-    m_recording_ghost.maybe_add_action(m_time, m_player.m_pos, m_player.m_grounded);
+    if (m_player.m_did_move)
+        m_recording_ghost.maybe_add_action(m_time, m_player.m_pos, m_player.m_grounded);
+}
+
+void Game::draw_background(SDL_Renderer* renderer)
+{
+    // TODO
 }
 
 void Game::render(SDL_Renderer* renderer, double dt)
@@ -205,6 +213,8 @@ void Game::render(SDL_Renderer* renderer, double dt)
                     SDL_FLIP_NONE);
     };
 
+    draw_background(renderer);
+
     // draw level
     for (int x = m_camera.m_tile_top.x; x < m_camera.m_tile_bottom.x; x++) {
         for (int y = m_camera.m_tile_top.y; y < m_camera.m_tile_bottom.y; y++) {
@@ -228,11 +238,12 @@ void Game::render(SDL_Renderer* renderer, double dt)
         }
     }
 
+    // draw ghost
+    if (m_player.m_did_move)
+        m_playback_ghost.draw(renderer, &m_camera, m_time - m_player.m_move_start_time);
+
     // draw particles
     m_ps.draw(dt, &m_camera, renderer);
-
-    // draw ghost
-    m_playback_ghost.draw(renderer, &m_camera, m_time - m_level_start_time);
 
     // draw player
     m_player.draw(renderer, &m_camera);

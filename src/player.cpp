@@ -10,14 +10,18 @@ void Player::update(double dt, double time, ParticleSystem* ps)
 
     const Uint8* keys = SDL_GetKeyboardState(nullptr);
 
+    bool did_move_temp = m_did_move;
     m_walking = false;
+
     if (keys[SDL_SCANCODE_A] || keys[SDL_SCANCODE_LEFT]) {
         m_direction = LEFT;
         m_walking = true;
+        m_did_move = true;
     }
     if (keys[SDL_SCANCODE_D] || keys[SDL_SCANCODE_RIGHT]) {
         m_direction = RIGHT;
         m_walking = true;
+        m_did_move = true;
     }
     // keep jumping when holdingd
     if ((keys[SDL_SCANCODE_SPACE] ||
@@ -25,6 +29,10 @@ void Player::update(double dt, double time, ParticleSystem* ps)
             keys[SDL_SCANCODE_UP]) &&
             (m_grounded && m_jumps_since_landed == 0))
         jump();
+
+    if (m_did_move && !did_move_temp) {
+        m_move_start_time = time;
+    }
 
     // fall
     if (!m_grounded) {
@@ -88,6 +96,7 @@ void Player::jump()
     if (m_jumps_since_landed < 2) {
         m_vel.y = -P_JUMP_HEIGHT;
         m_jumps_since_landed++;
+        m_did_move = true;
     }
 }
 

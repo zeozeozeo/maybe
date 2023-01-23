@@ -42,6 +42,8 @@ public:
     double m_last_particle_time = 0.0;
     bool m_dead;
     double m_time_since_dead;
+    bool m_did_move;
+    double m_move_start_time;
 };
 
 #endif // PLAYER_H
