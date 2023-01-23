@@ -7,7 +7,7 @@
 Level::Level(std::string path)
 {
     auto fs = cmrc::assets::get_filesystem();
-    auto image_file = fs.open(ASSETS_FOLDER + path);
+    auto image_file = fs.open(ASSETS_PATH + path);
     const stbi_uc* buffer = (stbi_uc*)image_file.cbegin();
 
     int width = 0, height = 0, comp = 0;
@@ -72,7 +72,13 @@ Level::Level(std::string path)
 
 Tile* Level::tile_at(int x, int y)
 {
-    return &m_tiles.at(x).at(y);
+    if (x < 0 || y < 0 || x >= m_tiles.size() || y >= m_tiles[x].size()) {
+        // maybe someone tried to overwrite it
+        if (m_empty_tile.m_type != AIR)
+            m_empty_tile = Tile();
+        return &m_empty_tile;
+    }
+    return &m_tiles[x][y];
 }
 
 
@@ -81,18 +87,20 @@ SDL_Rect Level::tile_to_rect(int x, int y)
     return { x * utils::tile_size, y * utils::tile_size, utils::tile_size, utils::tile_size };
 }
 
-void Level::resolve_collision(Vec2<double>* pos, Vec2<double>* size, Vec2<int>tile_top, Vec2<int>tile_bottom)
+bool Level::resolve_collision(Vec2<double>* pos, Vec2<double>* size, Vec2<int>tile_top, Vec2<int>tile_bottom)
 {
     SDL_Rect rect;
+    bool colliding = false;
+
     auto update_rect = [&]() {
         rect = { (int)pos->x, (int)pos->y, (int)size->x, (int)size->y };
     };
     update_rect();
 
-    tile_top.x = utils::clamp(tile_top.x, 0, m_width);
-    tile_top.y = utils::clamp(tile_top.y, 0, m_height);
-    tile_bottom.x = utils::clamp(tile_bottom.x, 0, m_width);
-    tile_bottom.y = utils::clamp(tile_bottom.y, 0, m_height);
+    // tile_top.x = utils::clamp(tile_top.x, 0, m_width);
+    // tile_top.y = utils::clamp(tile_top.y, 0, m_height);
+    // tile_bottom.x = utils::clamp(tile_bottom.x, 0, m_width);
+    // tile_bottom.y = utils::clamp(tile_bottom.y, 0, m_height);
 
     for (int x = tile_top.x; x < tile_bottom.x; x++) {
         for (int y = tile_top.y; y < tile_bottom.y; y++) {
@@ -106,6 +114,8 @@ void Level::resolve_collision(Vec2<double>* pos, Vec2<double>* size, Vec2<int>ti
             // try to intersect
             if (!SDL_IntersectRect(&tile_rect, &rect, &r))
                 continue; // not intersecting; continue to the next tile
+
+            colliding = true;
 
             // we have a collision, push the player out of the tile
             if (r.w < r.h) {
@@ -129,4 +139,6 @@ void Level::resolve_collision(Vec2<double>* pos, Vec2<double>* size, Vec2<int>ti
             }
         }
     }
+
+    return colliding;
 }

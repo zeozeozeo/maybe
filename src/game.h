@@ -3,6 +3,7 @@
 
 #include "camera.h"
 #include "color.h"
+#include "ghost.h"
 #include "level.h"
 #include "player.h"
 #include <SDL.h>
@@ -41,6 +42,12 @@ public:
     double m_time;
     nk_context* m_ctx;
     bool m_show_ui;
+    Ghost m_recording_ghost;
+    Ghost m_playback_ghost;
+    double m_level_start_time;
+
+    char m_ui_replay_path[256];
+    nk_bool m_ui_overwrite_file;
 };
 
 #endif // GAME_H

@@ -59,17 +59,17 @@ void Player::update(double dt, double time, ParticleSystem* ps)
 
 void Player::collide(Level* level, Vec2<int> tile_top, Vec2<int> tile_bottom, ParticleSystem* ps)
 {
-    m_grounded = false; // assume that we're not on the ground
-
     Vec2<int> top = { ((int)(m_pos.x-m_size.x)) / utils::tile_size-1, ((int)(m_pos.y-m_size.y)) / utils::tile_size-1 };
     Vec2<int> bottom = { ((int)(m_pos.x+m_size.x)) / utils::tile_size+1, ((int)(m_pos.y+m_size.y)) / utils::tile_size+1 };
 
     int prev_y = m_pos.y;
-    level->resolve_collision(&m_pos, &m_size, top, bottom);
+    bool colliding = level->resolve_collision(&m_pos, &m_size, top, bottom);
 
-    if (prev_y > m_pos.y) {
+    if (colliding && prev_y > m_pos.y) {
         m_grounded = true;
         m_jumps_since_landed = 0;
+    } else {
+        m_grounded = false;
     }
 }
 

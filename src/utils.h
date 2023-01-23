@@ -1,6 +1,8 @@
 #ifndef UTILS_H
 #define UTILS_H
 
+#define ASSETS_PATH "assets/"
+
 namespace utils
 {
 extern int tile_size;

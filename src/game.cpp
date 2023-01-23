@@ -5,6 +5,7 @@
 #define NK_SDL_RENDERER_IMPLEMENTATION
 #include "nuklear.h"
 #include "nuklear_sdl_renderer.h"
+#include <thread>
 
 void Game::init_ui(SDL_Renderer* renderer, SDL_Window* window, float font_scale)
 {
@@ -33,10 +34,41 @@ void Game::draw_ui(double dt)
         NK_WINDOW_BORDER|NK_WINDOW_MOVABLE|NK_WINDOW_SCALABLE|
         NK_WINDOW_MINIMIZABLE|NK_WINDOW_TITLE))
     {
-        nk_layout_row_dynamic(m_ctx, 15, 1);
-        nk_labelf(m_ctx, NK_TEXT_LEFT, "%.3f fps", 1.0 / dt);
-        nk_labelf(m_ctx, NK_TEXT_LEFT, "%zu particles", m_ps.m_particles.size());
-        nk_labelf(m_ctx, NK_TEXT_LEFT, "x: %f, y: %f", m_player.m_pos.x, m_player.m_pos.y);
+        if (nk_tree_push(m_ctx, NK_TREE_TAB, "Ghost", NK_MINIMIZED)) {
+            nk_layout_row_dynamic(m_ctx, 15, 1);
+            nk_labelf(m_ctx, NK_TEXT_LEFT, "recorded actions: %zu", m_recording_ghost.m_actions.size());
+            nk_labelf(m_ctx, NK_TEXT_LEFT, "fps: %f", m_recording_ghost.m_fps);
+
+            nk_layout_row_dynamic(m_ctx, 25, 1);
+            nk_edit_string_zero_terminated(m_ctx,
+                                           NK_EDIT_FIELD,
+                                           m_ui_replay_path,
+                                           sizeof(m_ui_replay_path),
+                                           nk_filter_default);
+
+            nk_layout_row_dynamic(m_ctx, 20, 1);
+            nk_checkbox_label(m_ctx, "Overwrite", &m_ui_overwrite_file);
+            nk_layout_row_dynamic(m_ctx, 25, 1);
+
+            if (nk_button_label(m_ctx, "Save Replay")) {
+                std::string path = m_ui_replay_path;
+
+                if (path.size() == 0)
+                    return;
+
+                m_recording_ghost.save_to_file(path, m_ui_overwrite_file);
+            }
+
+            nk_tree_pop(m_ctx);
+        }
+
+        if (nk_tree_push(m_ctx, NK_TREE_TAB, "Other", NK_MINIMIZED)) {
+            nk_layout_row_dynamic(m_ctx, 15, 1);
+            nk_labelf(m_ctx, NK_TEXT_LEFT, "%.3f fps", 1.0 / dt);
+            nk_labelf(m_ctx, NK_TEXT_LEFT, "%zu particles", m_ps.m_particles.size());
+            nk_labelf(m_ctx, NK_TEXT_LEFT, "x: %f, y: %f", m_player.m_pos.x, m_player.m_pos.y);
+            nk_tree_pop(m_ctx);
+        }
     }
     nk_end(m_ctx);
 }
@@ -103,6 +135,9 @@ void Game::update(double dt, int screen_w, int screen_h) {
     Vec2 camera_target(m_player.m_pos.x + m_player.m_size.x / 2,
                        m_player.m_pos.y + m_player.m_size.y / 2);
     m_camera.update(camera_target, screen_w, screen_h);
+
+    // record the action
+    m_recording_ghost.maybe_add_action(m_time, m_player.m_pos, m_player.m_grounded);
 }
 
 void Game::render(SDL_Renderer* renderer, double dt)
@@ -136,6 +171,9 @@ void Game::render(SDL_Renderer* renderer, double dt)
     // draw particles
     m_ps.draw(dt, &m_camera, renderer);
 
+    // draw ghost
+    m_playback_ghost.draw(renderer, &m_camera, m_time - m_level_start_time);
+
     // draw player
     SDL_Rect player_rect = m_player.get_rect();
     m_camera.translate(&player_rect);
@@ -155,12 +193,16 @@ void Game::render(SDL_Renderer* renderer, double dt)
 void Game::load_level()
 {
     m_level = Level("level1.png");
+    m_playback_ghost.load_from_file_e("level1.run");
     reset();
 }
 
 void Game::reset()
 {
     utils::tile_size = 48;
+    m_level_start_time = m_time;
+    m_recording_ghost.clear_actions();
+
     m_player = Player(); // reset player
     m_player.m_pos = Vec2<double>(m_level.m_spawn_pos.x * utils::tile_size,
                                  (m_level.m_spawn_pos.y-1) * utils::tile_size);

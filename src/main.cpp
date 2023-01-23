@@ -37,6 +37,7 @@ int main()
         error(std::string("failed to create renderer: ") + SDL_GetError());
 
     SDL_GL_SetSwapInterval(1); // enable vsync (if the renderer is accelerated)
+    SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
 
     // scale the renderer output for high-DPI displays
     float font_scale = 1.0;

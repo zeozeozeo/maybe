@@ -12,9 +12,11 @@ include_directories(maybe ${SDL2_INCLUDE_DIRS})
 # embed assets folder into the executable with cmrc
 include(CMakeRC.cmake)
 cmrc_add_resource_library(assets-rc
-        ALIAS assets::rc
-        NAMESPACE assets
-        assets/level1.png)
+    ALIAS assets::rc
+    NAMESPACE assets
+    assets/level1.png
+    assets/level1.run
+)
 
 add_executable(maybe
     src/main.cpp
@@ -34,6 +36,8 @@ add_executable(maybe
     src/particles.h
     src/utils.cpp
     src/utils.h
+    src/ghost.cpp
+    src/ghost.h
 )
 
 # link
