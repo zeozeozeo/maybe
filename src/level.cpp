@@ -1,5 +1,5 @@
 #include "level.h"
-#define STB_IMAGE_IMPLEMENTATION
+// #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 #include "error.h"
 #include "utils.h"
@@ -22,12 +22,15 @@ Level::Level(std::string path)
 
     // 255,255,255 (white): air
     // 0,0,0 (black): solid
+    // 255,0,0 (red): hazard (spike)
     // 0,255,0 (green): spawn position
     auto get_tile_type = [&](Uint8 r, Uint8 g, Uint8 b, Uint8 a) -> TileType {
         if (r == 255 && g == 255 && b == 255)
             return AIR;
         if (r == 0 && g == 0 && b == 0)
             return SOLID;
+        if (r == 255 && g == 0 && b == 0)
+            return HAZARD;
         if (r == 0 && g == 255 && b == 0)
             return SPAWN;
 
@@ -87,7 +90,7 @@ SDL_Rect Level::tile_to_rect(int x, int y)
     return { x * utils::tile_size, y * utils::tile_size, utils::tile_size, utils::tile_size };
 }
 
-bool Level::resolve_collision(Vec2<double>* pos, Vec2<double>* size, Vec2<int>tile_top, Vec2<int>tile_bottom)
+bool Level::resolve_collision(Vec2<double>* pos, Vec2<double>* size, Vec2<int>tile_top, Vec2<int>tile_bottom, bool* is_hazard)
 {
     SDL_Rect rect;
     bool colliding = false;
@@ -97,14 +100,10 @@ bool Level::resolve_collision(Vec2<double>* pos, Vec2<double>* size, Vec2<int>ti
     };
     update_rect();
 
-    // tile_top.x = utils::clamp(tile_top.x, 0, m_width);
-    // tile_top.y = utils::clamp(tile_top.y, 0, m_height);
-    // tile_bottom.x = utils::clamp(tile_bottom.x, 0, m_width);
-    // tile_bottom.y = utils::clamp(tile_bottom.y, 0, m_height);
-
     for (int x = tile_top.x; x < tile_bottom.x; x++) {
         for (int y = tile_top.y; y < tile_bottom.y; y++) {
             Tile* tile = tile_at(x, y);
+
             if (tile->m_type == AIR)
                 continue; // don't collide with air
 
@@ -114,6 +113,9 @@ bool Level::resolve_collision(Vec2<double>* pos, Vec2<double>* size, Vec2<int>ti
             // try to intersect
             if (!SDL_IntersectRect(&tile_rect, &rect, &r))
                 continue; // not intersecting; continue to the next tile
+
+            if (is_hazard != nullptr && tile->m_type == HAZARD)
+                *is_hazard = true;
 
             colliding = true;
 

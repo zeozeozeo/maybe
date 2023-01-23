@@ -16,6 +16,7 @@ cmrc_add_resource_library(assets-rc
     NAMESPACE assets
     assets/level1.png
     assets/level1.run
+    assets/spike.png
 )
 
 add_executable(maybe

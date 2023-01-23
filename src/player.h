@@ -29,6 +29,8 @@ public:
     void maybe_emit_walk_particles(ParticleSystem* ps, double time);
     void emit_landing_particles(ParticleSystem* ps);
     SDL_Rect get_rect();
+    void die(ParticleSystem* ps);
+    void draw(SDL_Renderer* renderer, Camera* camera);
 
     Vec2<double> m_vel; // velocity
     Vec2<double> m_pos; // position
@@ -38,6 +40,8 @@ public:
     bool m_walking = false;
     int m_jumps_since_landed = 0;
     double m_last_particle_time = 0.0;
+    bool m_dead;
+    double m_time_since_dead;
 };
 
 #endif // PLAYER_H

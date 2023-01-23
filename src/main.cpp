@@ -41,7 +41,6 @@ int main()
 
     // scale the renderer output for high-DPI displays
     float font_scale = 1.0;
-
     {
         int render_w, render_h;
         int window_w, window_h;
@@ -56,6 +55,8 @@ int main()
 
     // create game context (allocated on the heap incase it gets too big)
     std::unique_ptr<Game> game = std::make_unique<Game>();
+
+    game->load_textures(renderer);
     game->init_ui(renderer, window, font_scale);
     game->load_level();
 

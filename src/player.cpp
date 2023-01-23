@@ -2,6 +2,12 @@
 
 void Player::update(double dt, double time, ParticleSystem* ps)
 {
+    if (m_dead) {
+        m_time_since_dead += dt;
+        return;
+    }
+    m_time_since_dead = 0.0;
+
     const Uint8* keys = SDL_GetKeyboardState(nullptr);
 
     m_walking = false;
@@ -63,7 +69,8 @@ void Player::collide(Level* level, Vec2<int> tile_top, Vec2<int> tile_bottom, Pa
     Vec2<int> bottom = { ((int)(m_pos.x+m_size.x)) / utils::tile_size+1, ((int)(m_pos.y+m_size.y)) / utils::tile_size+1 };
 
     int prev_y = m_pos.y;
-    bool colliding = level->resolve_collision(&m_pos, &m_size, top, bottom);
+    bool is_hazard = false;
+    bool colliding = level->resolve_collision(&m_pos, &m_size, top, bottom, &is_hazard);
 
     if (colliding && prev_y > m_pos.y) {
         m_grounded = true;
@@ -71,6 +78,9 @@ void Player::collide(Level* level, Vec2<int> tile_top, Vec2<int> tile_bottom, Pa
     } else {
         m_grounded = false;
     }
+
+    if (is_hazard && !m_dead)
+        die(ps);
 }
 
 void Player::jump()
@@ -114,4 +124,42 @@ void Player::maybe_emit_walk_particles(ParticleSystem* ps, double time)
 void Player::emit_landing_particles(ParticleSystem* ps)
 {
     // TODO
+}
+
+void Player::die(ParticleSystem *ps)
+{
+    if (m_dead)
+        return;
+
+    m_dead = true;
+    int p_size = 16;
+    float max_speed = 150.0;
+
+    for (int x = m_pos.x; x < m_pos.x+m_size.x; x += p_size) {
+        for (int y = m_pos.y; y < m_pos.y+m_size.y; y += p_size) {
+            for (int i = 0; i < 2; i++) {
+                Particle* p = ps->add_particle(
+                            Vec2<double>(x, y),
+                            Vec2<double>((float)p_size+utils::rand_float(-1.0, 1.0)),
+                            Color(255, 0, 0, 255),
+                            utils::rand_float(0.4, 0.7),
+                            utils::rand_float(0.2, 0.3));
+
+                p->m_vel.x = utils::rand_float(-max_speed, max_speed);
+                p->m_vel.y = utils::rand_float(-max_speed, max_speed);
+            }
+        }
+    }
+}
+
+void Player::draw(SDL_Renderer *renderer, Camera *camera)
+{
+    if (m_dead)
+        return;
+
+    SDL_Rect player_rect = get_rect();
+    camera->translate(&player_rect);
+
+    SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
+    SDL_RenderFillRect(renderer, &player_rect);
 }

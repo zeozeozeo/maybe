@@ -1,4 +1,8 @@
+#define SDL_STBIMAGE_IMPLEMENTATION
+#include "SDL_stbimage.h"
+
 #include "game.h"
+#include "error.h"
 #include "utils.h"
 
 #define NK_IMPLEMENTATION
@@ -84,6 +88,25 @@ void Game::end_events()
         nk_input_end(m_ctx);
 }
 
+void Game::load_texture(std::string path, SDL_Renderer* renderer, SDL_Texture** tex)
+{
+    auto fs = cmrc::assets::get_filesystem();
+    cmrc::file file = fs.open(ASSETS_PATH + path);
+    *tex = STBIMG_LoadTextureFromMemory(renderer, (const unsigned char*)file.begin(), file.size());
+
+    if (tex == nullptr)
+        error("failed to load texture \"" + path + "\": " + SDL_GetError());
+
+    SDL_SetTextureBlendMode(*tex, SDL_BLENDMODE_BLEND);
+    SDL_SetTextureScaleMode(*tex, SDL_ScaleModeLinear);
+    SDL_Log("loaded texture \"%s\"", path.c_str());
+}
+
+void Game::load_textures(SDL_Renderer* renderer)
+{
+    load_texture("spike.png", renderer, &m_spike_texture);
+}
+
 void Game::process_event(SDL_Event* event)
 {
     SDL_Scancode scancode;
@@ -124,18 +147,28 @@ void Game::update(double dt, int screen_w, int screen_h) {
     m_time += dt;
     m_player.update(dt, m_time, &m_ps);
 
-    // the positions of tiles that are visible on the screen (from top-left to bottom-right)
-    m_tile_top.x = utils::clamp<int>(m_camera.m_pos.x / utils::tile_size - 2, 0, m_level.m_width);
-    m_tile_top.y = utils::clamp<int>(m_camera.m_pos.y / utils::tile_size - 2, 0, m_level.m_height);
-    m_tile_bottom.x = utils::clamp<int>((m_camera.m_pos.x + screen_w) / utils::tile_size + 2, 0, m_level.m_width);
-    m_tile_bottom.y = utils::clamp<int>((m_camera.m_pos.y + screen_h) / utils::tile_size + 2, 0, m_level.m_height);
+    if (m_player.m_time_since_dead > 0.4) {
+        reset();
+        return;
+    }
 
-    m_player.collide(&m_level, m_tile_top, m_tile_bottom, &m_ps);
+    // the positions of tiles that are visible on the screen (from top-left to bottom-right)
+    m_camera.m_tile_top.x = utils::clamp<int>(m_camera.m_pos.x / utils::tile_size - 2, 0, m_level.m_width);
+    m_camera.m_tile_top.y = utils::clamp<int>(m_camera.m_pos.y / utils::tile_size - 2, 0, m_level.m_height);
+    m_camera.m_tile_bottom.x = utils::clamp<int>((m_camera.m_pos.x + screen_w) / utils::tile_size + 2, 0, m_level.m_width);
+    m_camera.m_tile_bottom.y = utils::clamp<int>((m_camera.m_pos.y + screen_h) / utils::tile_size + 2, 0, m_level.m_height);
+
+    m_player.collide(&m_level, m_camera.m_tile_top, m_camera.m_tile_bottom, &m_ps);
     Vec2 camera_target(m_player.m_pos.x + m_player.m_size.x / 2,
                        m_player.m_pos.y + m_player.m_size.y / 2);
     m_camera.update(camera_target, screen_w, screen_h);
 
-    // record the action
+    if (!m_player.m_dead && m_player.m_pos.y / utils::tile_size > m_level.m_height + 8) {
+        m_player.die(&m_ps);
+        return;
+    }
+
+    // record action
     m_recording_ghost.maybe_add_action(m_time, m_player.m_pos, m_player.m_grounded);
 }
 
@@ -144,26 +177,54 @@ void Game::render(SDL_Renderer* renderer, double dt)
     SDL_SetRenderDrawColor(renderer, m_bg_color.r, m_bg_color.g, m_bg_color.b, m_bg_color.a);
     SDL_RenderClear(renderer);
 
+    auto draw_spike = [&](int x, int y) {
+        if (m_spike_texture == nullptr)
+            return;
+
+        SDL_Rect dst_rect = m_level.tile_to_rect(x, y);
+        m_camera.translate(&dst_rect);
+
+        double angle = 0.0;
+
+        if (m_level.tile_at(x, y+1)->m_type == SOLID)
+            angle = 0.0;
+        else if (m_level.tile_at(x, y-1)->m_type == SOLID)
+            angle = 180.0;
+        else if (m_level.tile_at(x-1, y)->m_type == SOLID)
+            angle = 90.0;
+        else if (m_level.tile_at(x+1, y)->m_type == SOLID)
+            angle = -90.0;
+
+        SDL_RenderCopyEx(
+                    renderer,
+                    m_spike_texture,
+                    nullptr,
+                    &dst_rect,
+                    angle,
+                    nullptr,
+                    SDL_FLIP_NONE);
+    };
+
     // draw level
-    for (int x = m_tile_top.x; x < m_tile_bottom.x; x++) {
-        for (int y = m_tile_top.y; y < m_tile_bottom.y; y++) {
-            // would be cool to check for collisions here,
-            // since we're doing exactly the same thing there,
-            // but the physics loop has to be separated from the
-            // draw loop :(
+    for (int x = m_camera.m_tile_top.x; x < m_camera.m_tile_bottom.x; x++) {
+        for (int y = m_camera.m_tile_top.y; y < m_camera.m_tile_bottom.y; y++) {
             Tile* tile = m_level.tile_at(x, y);
 
             switch (tile->m_type) {
             case SOLID:
+            {
                 SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+                SDL_Rect rect = m_level.tile_to_rect(x, y);
+                m_camera.translate(&rect);
+                SDL_RenderFillRect(renderer, &rect);
+                break;
+            }
+            case HAZARD:
+                draw_spike(x, y);
                 break;
             default:
                 continue;
             }
-
-            SDL_Rect rect = m_level.tile_to_rect(x, y);
-            m_camera.translate(&rect);
-            SDL_RenderFillRect(renderer, &rect);
         }
     }
 
@@ -174,11 +235,7 @@ void Game::render(SDL_Renderer* renderer, double dt)
     m_playback_ghost.draw(renderer, &m_camera, m_time - m_level_start_time);
 
     // draw player
-    SDL_Rect player_rect = m_player.get_rect();
-    m_camera.translate(&player_rect);
-
-    SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
-    SDL_RenderFillRect(renderer, &player_rect);
+    m_player.draw(renderer, &m_camera);
 
     // draw ui
     if (m_show_ui) {
@@ -205,4 +262,9 @@ void Game::reset()
     m_player = Player(); // reset player
     m_player.m_pos = Vec2<double>(m_level.m_spawn_pos.x * utils::tile_size,
                                  (m_level.m_spawn_pos.y-1) * utils::tile_size);
+}
+
+Game::~Game()
+{
+    SDL_DestroyTexture(m_spike_texture);
 }

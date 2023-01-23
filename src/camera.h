@@ -14,6 +14,8 @@ public:
     void translate(SDL_Rect* rect);
 
     Vec2<double> m_pos;
+    Vec2<int> m_tile_top; // top left tile on the screen (clamped)
+    Vec2<int> m_tile_bottom; // bottom right tile on the screen (clamped)
 };
 
 #endif // CAMERA_H
