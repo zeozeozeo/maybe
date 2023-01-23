@@ -5,7 +5,6 @@
 #define NK_SDL_RENDERER_IMPLEMENTATION
 #include "nuklear.h"
 #include "nuklear_sdl_renderer.h"
-#include <thread>
 
 void Game::init_ui(SDL_Renderer* renderer, SDL_Window* window, float font_scale)
 {
