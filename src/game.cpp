@@ -152,16 +152,16 @@ void Game::update(double dt, int screen_w, int screen_h) {
         return;
     }
 
-    // the positions of tiles that are visible on the screen (from top-left to bottom-right)
-    m_camera.m_tile_top.x = utils::clamp<int>(m_camera.m_pos.x / utils::tile_size - 2, 0, m_level.m_width);
-    m_camera.m_tile_top.y = utils::clamp<int>(m_camera.m_pos.y / utils::tile_size - 2, 0, m_level.m_height);
-    m_camera.m_tile_bottom.x = utils::clamp<int>((m_camera.m_pos.x + screen_w) / utils::tile_size + 2, 0, m_level.m_width);
-    m_camera.m_tile_bottom.y = utils::clamp<int>((m_camera.m_pos.y + screen_h) / utils::tile_size + 2, 0, m_level.m_height);
-
     m_player.collide(&m_level, m_camera.m_tile_top, m_camera.m_tile_bottom, &m_ps);
     Vec2 camera_target(m_player.m_pos.x + m_player.m_size.x / 2,
                        m_player.m_pos.y + m_player.m_size.y / 2);
     m_camera.update(camera_target, screen_w, screen_h);
+
+    // the positions of tiles that are visible on the screen (from top-left to bottom-right)
+    m_camera.m_tile_top.x = utils::clamp<int>(m_camera.m_pos.x / utils::tile_size, 0, m_level.m_width);
+    m_camera.m_tile_top.y = utils::clamp<int>(m_camera.m_pos.y / utils::tile_size, 0, m_level.m_height);
+    m_camera.m_tile_bottom.x = utils::clamp<int>((m_camera.m_pos.x + screen_w) / utils::tile_size + 1, 0, m_level.m_width);
+    m_camera.m_tile_bottom.y = utils::clamp<int>((m_camera.m_pos.y + screen_h) / utils::tile_size + 1, 0, m_level.m_height);
 
     if (!m_player.m_dead && m_player.m_pos.y / utils::tile_size > m_level.m_height + 8) {
         m_player.die(&m_ps);
