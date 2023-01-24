@@ -11,7 +11,7 @@
 #include <cmrc/cmrc.hpp>
 CMRC_DECLARE(assets);
 
-#define GHOST_PLAYBACK_FPS 20.0
+#define GHOST_PLAYBACK_FPS 40.0
 
 class Action
 {

@@ -105,6 +105,8 @@ void Ghost::load_from_file_e(std::string path)
         val_idx++;
     }
 
+    add_action(current_action, grounded);
+
     SDL_Log("ghost: loaded replay from file %s (%zu actions, %f fps)",
             path.c_str(),
             m_actions.size(),

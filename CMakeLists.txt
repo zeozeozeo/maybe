@@ -39,6 +39,8 @@ add_executable(maybe
     src/utils.h
     src/ghost.cpp
     src/ghost.h
+    src/editor.cpp
+    src/editor.h
 )
 
 # link

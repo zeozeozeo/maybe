@@ -159,6 +159,12 @@ void Game::update(double dt, int screen_w, int screen_h) {
                        m_player.m_pos.y + m_player.m_size.y / 2);
     m_camera.update(camera_target, screen_w, screen_h);
 
+    // update platforms
+    if (m_player.m_did_move) {
+        for (auto& platform : m_level.m_platforms)
+            platform.update(&m_level, dt);
+    }
+
     // the positions of tiles that are visible on the screen (from top-left to bottom-right)
     m_camera.m_tile_top.x = utils::clamp<int>(m_camera.m_pos.x / utils::tile_size, 0, m_level.m_width);
     m_camera.m_tile_top.y = utils::clamp<int>(m_camera.m_pos.y / utils::tile_size, 0, m_level.m_height);
@@ -171,7 +177,7 @@ void Game::update(double dt, int screen_w, int screen_h) {
     }
 
     // record action
-    if (m_player.m_did_move)
+    if (m_player.m_did_move && !m_player.m_dead)
         m_recording_ghost.maybe_add_action(m_time, m_player.m_pos, m_player.m_grounded);
 }
 
@@ -238,6 +244,11 @@ void Game::render(SDL_Renderer* renderer, double dt)
         }
     }
 
+    // draw platforms
+    for (auto& platform : m_level.m_platforms) {
+        platform.draw(renderer, &m_camera);
+    }
+
     // draw ghost
     if (m_player.m_did_move)
         m_playback_ghost.draw(renderer, &m_camera, m_time - m_player.m_move_start_time);
@@ -259,6 +270,7 @@ void Game::render(SDL_Renderer* renderer, double dt)
 
 void Game::load_level()
 {
+    utils::tile_size = 48;
     m_level = Level("level1.png");
     m_playback_ghost.load_from_file_e("level1.run");
     reset();
@@ -269,6 +281,9 @@ void Game::reset()
     utils::tile_size = 48;
     m_level_start_time = m_time;
     m_recording_ghost.clear_actions();
+
+    for (auto& platform : m_level.m_platforms)
+        platform.reset_pos();
 
     m_player = Player(); // reset player
     m_player.m_pos = Vec2<double>(m_level.m_spawn_pos.x * utils::tile_size,

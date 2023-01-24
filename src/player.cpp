@@ -73,7 +73,7 @@ void Player::update(double dt, double time, ParticleSystem* ps)
 
 void Player::collide(Level* level, Vec2<int> tile_top, Vec2<int> tile_bottom, ParticleSystem* ps)
 {
-    Vec2<int> top = { ((int)(m_pos.x-m_size.x)) / utils::tile_size-1, ((int)(m_pos.y-m_size.y)) / utils::tile_size-1 };
+    Vec2<int> top = { ((int)(m_pos.x)) / utils::tile_size-1, ((int)(m_pos.y)) / utils::tile_size-1 };
     Vec2<int> bottom = { ((int)(m_pos.x+m_size.x)) / utils::tile_size+1, ((int)(m_pos.y+m_size.y)) / utils::tile_size+1 };
 
     int prev_y = m_pos.y;
