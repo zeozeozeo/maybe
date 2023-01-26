@@ -23,7 +23,7 @@ class Player
 {
 public:
     Player() = default;
-    void update(double dt, double time, ParticleSystem* ps);
+    void update(double dt, double time, ParticleSystem* ps, bool do_input);
     void collide(Level* level, Vec2<int> tile_top, Vec2<int> tile_bottom, ParticleSystem *ps);
     void jump();
     void maybe_emit_walk_particles(ParticleSystem* ps, double time);

@@ -92,6 +92,7 @@ int main()
             game->update(dt / steps, screen_w, screen_h);
 
         game->render(renderer, dt);
+        // SDL_Delay(40);
     }
 
     // cleanup

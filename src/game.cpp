@@ -91,13 +91,14 @@ void Game::process_event(SDL_Event* event)
 {
     SDL_Scancode scancode;
 
+    if (event->type == SDL_QUIT)
+        m_running = false;
     if (m_show_ui)
         nk_sdl_handle_event(event);
 
+    m_can_input = !nk_item_is_any_active(m_ctx);
+
     switch (event->type) {
-    case SDL_QUIT:
-        m_running = false;
-        break;
     case SDL_KEYDOWN:
         if (event->key.repeat)
             break;
@@ -107,11 +108,12 @@ void Game::process_event(SDL_Event* event)
         case SDL_SCANCODE_W:
         case SDL_SCANCODE_UP:
         case SDL_SCANCODE_SPACE:
-            if (m_player.m_jumps_since_landed > 0)
+            if (m_player.m_jumps_since_landed > 0 && m_can_input)
                 m_player.jump();
             break;
         case SDL_SCANCODE_R:
-            reset();
+            if (m_can_input)
+                reset();
             break;
         case SDL_SCANCODE_U: // toggle ui
             m_show_ui = !m_show_ui;
@@ -125,7 +127,7 @@ void Game::process_event(SDL_Event* event)
 
 void Game::update(double dt, int screen_w, int screen_h) {
     m_time += dt;
-    m_player.update(dt, m_time, &m_ps);
+    m_player.update(dt, m_time, &m_ps, m_can_input);
     m_screen_w = screen_w;
     m_screen_h = screen_h;
 

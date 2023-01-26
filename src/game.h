@@ -52,6 +52,7 @@ public:
     char m_ui_replay_path[256];
     nk_bool m_ui_overwrite_file;
     SDL_Texture* m_spike_texture;
+    bool m_can_input = true;
 };
 
 #endif // GAME_H
