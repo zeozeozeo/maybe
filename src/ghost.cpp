@@ -16,8 +16,8 @@ void Ghost::clear_actions()
 bool Ghost::maybe_add_action(double time, Vec2<double> pos, bool grounded)
 {
     if ((time-m_last_added_action_time) >= (1.0 / m_fps)) {
-        add_action(pos, grounded);
         m_last_added_action_time = time;
+        add_action(pos, grounded);
         return true;
     }
     return false;
