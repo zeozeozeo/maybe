@@ -42,26 +42,6 @@ void Game::draw_ui(double dt)
             nk_labelf(m_ctx, NK_TEXT_LEFT, "recorded actions: %zu", m_recording_ghost.m_actions.size());
             nk_labelf(m_ctx, NK_TEXT_LEFT, "fps: %f", m_recording_ghost.m_fps);
 
-            nk_layout_row_dynamic(m_ctx, 25, 1);
-            nk_edit_string_zero_terminated(m_ctx,
-                                           NK_EDIT_FIELD,
-                                           m_ui_replay_path,
-                                           sizeof(m_ui_replay_path),
-                                           nk_filter_default);
-
-            nk_layout_row_dynamic(m_ctx, 20, 1);
-            nk_checkbox_label(m_ctx, "Overwrite", &m_ui_overwrite_file);
-            nk_layout_row_dynamic(m_ctx, 25, 1);
-
-            if (nk_button_label(m_ctx, "Save Replay")) {
-                std::string path = m_ui_replay_path;
-
-                if (path.size() == 0)
-                    return;
-
-                m_recording_ghost.save_to_file(path, m_ui_overwrite_file);
-            }
-
             nk_tree_pop(m_ctx);
         }
 
@@ -272,7 +252,6 @@ void Game::load_level()
 {
     utils::tile_size = 48;
     m_level = Level("level1.png");
-    m_playback_ghost.load_from_file_e("level1.run");
     reset();
 }
 
@@ -280,6 +259,8 @@ void Game::reset()
 {
     utils::tile_size = 48;
     m_level_start_time = m_time;
+
+    m_playback_ghost = m_recording_ghost;
     m_recording_ghost.clear_actions();
 
     for (auto& platform : m_level.m_platforms)

@@ -15,7 +15,6 @@ cmrc_add_resource_library(assets-rc
     ALIAS assets::rc
     NAMESPACE assets
     assets/level1.png
-    assets/level1.run
     assets/spike.png
 )
 

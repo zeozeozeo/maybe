@@ -32,8 +32,6 @@ public:
     void add_action(Vec2<double> pos, bool grounded);
     void clear_actions();
     bool maybe_add_action(double time, Vec2<double> pos, bool grounded);
-    void save_to_file(std::string path, bool overwrite);
-    void load_from_file_e(std::string path); // loads from embedded assets
     void draw(SDL_Renderer* renderer, Camera* camera, double time);
 
     std::vector<Action> m_actions;

@@ -37,7 +37,7 @@ public:
     Vec2<double> m_pos;
     Vec2<double> m_size;
     Vec2<double> m_initial_pos;
-    double m_vel = -250.0; // x velocity
+    double m_vel = -300.0; // x velocity
     Uint32 m_index;
 };
 
